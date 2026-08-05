@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Blooming Garden</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Georgia, serif;
+}
+
+body{
+    transition:background 2s;
+}
+
+#photoViewer{
+
+    position:fixed;
+    inset:0;
+
+    background:rgba(0,0,0,.75);
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    opacity:0;
+    visibility:hidden;
+
+    transition:.3s;
+
+    z-index:1000;
+}
+
+#photoViewer.show{
+
+    opacity:1;
+    visibility:visible;
+}
+
+#photoFrame{
+
+    position:relative;
+
+    background:#f6e8c3;
+
+    border:14px solid #8b5a2b;
+
+    border-radius:12px;
+
+    padding:18px;
+
+    box-shadow:
+        0 0 40px rgba(0,0,0,.5);
+
+    max-width:90vw;
+    max-height:90vh;
+}
+
+#memoryPhoto{
+
+    display:block;
+
+    max-width:75vw;
+    max-height:75vh;
+
+    border-radius:6px;
+}
+
+#closeBtn{
+
+    position:absolute;
+
+    top:-16px;
+    right:-16px;
+
+    width:36px;
+    height:36px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:white;
+
+    cursor:pointer;
+
+    font-size:24px;
+
+    box-shadow:0 0 10px rgba(0,0,0,.4);
+}
+
+#sky{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+}
+
+.sun,.moon{
+    position:absolute;
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    top:70px;
+    right:120px;
+}
+
+.sun{
+    background:#FFD54F;
+    box-shadow:0 0 60px #ffe082;
+}
+
+.moon{
+    background:#eee;
+    box-shadow:0 0 40px white;
+}
+
+.cloud{
+    position:absolute;
+    width:180px;
+    height:60px;
+    background:white;
+    border-radius:50px;
+    opacity:.8;
+    animation:cloudMove linear infinite;
+}
+
+.cloud::before,
+.cloud::after{
+    content:"";
+    position:absolute;
+    background:white;
+    border-radius:50%;
+}
+
+.cloud::before{
+    width:70px;
+    height:70px;
+    left:20px;
+    top:-25px;
+}
+
+.cloud::after{
+    width:80px;
+    height:80px;
+    right:20px;
+    top:-35px;
+}
+
+@keyframes cloudMove{
+    from{
+        transform:translateX(-250px);
+    }
+    to{
+        transform:translateX(calc(100vw + 250px));
+    }
+}
+
+.firefly{
+    position:absolute;
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:#ffe96e;
+    animation:blink 2s infinite alternate;
+}
+
+@keyframes blink{
+    from{
+        opacity:.2;
+    }
+    to{
+        opacity:1;
+        box-shadow:0 0 12px yellow;
+    }
+}
+
+#ground{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    height:45%;
+}
+
+.hill{
+    position:absolute;
+    bottom:-120px;
+    left:-10%;
+    width:120%;
+    height:520px;
+    background:linear-gradient(#58b54c,#2d8c39);
+    border-radius:50%;
+}
+
+.flower{
+    position:absolute;
+    transform-origin:bottom center;
+    animation:sway 5s ease-in-out infinite;
+}
+
+@keyframes sway{
+    0%{transform:rotate(-2deg);}
+    25%{transform:rotate(2deg);}
+    50%{transform:rotate(-1deg);}
+    75%{transform:rotate(2deg);}
+    100%{transform:rotate(-2deg);}
+}
+
+.stem{
+    width:4px;
+    height:85px;
+    background:#2e8b57;
+    margin:auto;
+}
+
+.head{
+    position:relative;
+    width:34px;
+    height:34px;
+    margin:auto;
+}
+
+.petal{
+    position:absolute;
+    width:14px;
+    height:18px;
+    border-radius:10px;
+    transform-origin:center 16px;
+}
+
+.center{
+    position:absolute;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:gold;
+    top:5px;
+    left:-3px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="sky"></div>
+
+<div id="ground">
+<div class="hill"></div>
+</div>
+
+<div id="photoViewer">
+    <div id="photoFrame">
+
+        <button id="closeBtn">&times;</button>
+
+        <img id="memoryPhoto" src="" alt="Memory">
+
+    </div>
+</div>
+
+<script>
+
+const START=new Date(2025,11,5);
+
+function monthsPassed(){
+
+    const now=new Date();
+
+    let months=(now.getFullYear()-START.getFullYear())*12+
+               (now.getMonth()-START.getMonth());
+
+    if(now.getDate()<5)
+        months--;
+
+    return Math.max(0,months+1);
+}
+
+function random(seed){
+    return Math.abs(Math.sin(seed*9871.17))*10000%1;
+}
+
+const colors=[
+"#ff7aa2",
+"#ff6fa8",
+"#ffa94d",
+"#ffd43b",
+"#e599f7",
+"#74c0fc",
+"#63e6be",
+"#ff8787",
+"#fcc2d7",
+"#ffd8a8",
+"#b197fc"
+];
+
+function createFlower(monthNumber){
+
+    const flower=document.createElement("div");
+    flower.className="flower";
+
+    const x=10+random(monthNumber)*80;
+    const y=8+random(monthNumber+1)*22;
+
+    flower.style.left=x+"%";
+    flower.style.bottom=y+"%";
+
+    flower.style.animationDuration=
+        (4+random(monthNumber+4)*4)+"s";
+
+    const stem=document.createElement("div");
+    stem.className="stem";
+
+    const head=document.createElement("div");
+    head.className="head";
+
+    const color=colors[Math.floor(random(monthNumber+7)*colors.length)];
+
+    for(let p=0;p<8;p++){
+
+        const petal=document.createElement("div");
+        petal.className="petal";
+
+        petal.style.background=color;
+
+        petal.style.transform=
+            `rotate(${45*p}deg) translateY(-10px)`;
+
+        head.appendChild(petal);
+    }
+
+    const center=document.createElement("div");
+    center.className="center";
+
+    head.appendChild(center);
+
+    flower.appendChild(head);
+    flower.appendChild(stem);
+
+
+    flower.addEventListener("click",()=>{
+
+        document.getElementById("memoryPhoto").src=
+            `${monthNumber+1}.jpg`;
+
+        document
+            .getElementById("photoViewer")
+            .classList.add("show");
+    });
+
+    document.getElementById("ground").appendChild(flower);
+}
+
+for(let i=0;i<monthsPassed();i++)
+    createFlower(i);
+
+const hour=new Date().getHours();
+
+const sky=document.getElementById("sky");
+
+if(hour>=6 && hour<18){
+
+    document.body.style.background=
+    "linear-gradient(#87CEEB,#d8f5ff)";
+
+    const sun=document.createElement("div");
+    sun.className="sun";
+    sky.appendChild(sun);
+
+    for(let i=0;i<5;i++){
+
+        const c=document.createElement("div");
+        c.className="cloud";
+
+        c.style.top=(30+i*55)+"px";
+        c.style.animationDuration=(40+i*12)+"s";
+        c.style.animationDelay=(-i*6)+"s";
+
+        sky.appendChild(c);
+    }
+
+}
+else{
+
+    document.body.style.background=
+    "linear-gradient(#07142b,#13294b)";
+
+    const moon=document.createElement("div");
+    moon.className="moon";
+    sky.appendChild(moon);
+
+    for(let i=0;i<70;i++){
+
+        const star=document.createElement("div");
+        star.style.position="absolute";
+        star.style.width="2px";
+        star.style.height="2px";
+        star.style.background="white";
+        star.style.left=Math.random()*100+"%";
+        star.style.top=Math.random()*55+"%";
+        sky.appendChild(star);
+
+    }
+
+    for(let i=0;i<25;i++){
+
+        const f=document.createElement("div");
+        f.className="firefly";
+
+        f.style.left=Math.random()*100+"%";
+        f.style.top=(55+Math.random()*35)+"%";
+        f.style.animationDelay=Math.random()*2+"s";
+
+        sky.appendChild(f);
+
+    }
+
+const viewer=document.getElementById("photoViewer");
+const closeBtn=document.getElementById("closeBtn");
+
+closeBtn.onclick=()=>{
+
+    viewer.classList.remove("show");
+};
+
+viewer.onclick=(e)=>{
+
+    if(e.target===viewer)
+        viewer.classList.remove("show");
+};
+
+}
+
+</script>
+</body>
+</html>
